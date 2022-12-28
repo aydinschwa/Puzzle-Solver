@@ -1,4 +1,6 @@
 import copy
+import time
+import os
 
 
 color_map = {
@@ -30,6 +32,48 @@ def draw_board(board):
     print()
 
 
+def check_square(points):
+    x_vals = [tup[0] for tup in points]
+    y_vals = [tup[1] for tup in points]
+    if (max(x_vals) - min(x_vals) == 1) and (max(y_vals) - min(y_vals) == 1):
+        return True
+    else:
+        return False
+
+
+# use dfs to find number of distinct islands
+def legal_islands(board):
+    board = copy.deepcopy(board)
+    board_height = len(board)
+    board_width = len(board[0])
+    island_cells = []
+
+    def island_dfs(row, col):
+        if row < 0 or col < 0 or row >= board_height or col >= board_width or board[row][col] != 0:
+            return
+        island_cells.append((row, col))
+        board[row][col] = "#"
+        island_dfs(row - 1, col)
+        island_dfs(row + 1, col)
+        island_dfs(row, col - 1)
+        island_dfs(row, col + 1)
+
+    for row in range(board_height):
+        for col in range(board_width):
+            if board[row][col] == 0:
+                island_dfs(row, col)
+
+                if len(island_cells) < 4:
+                    return False
+                elif len(island_cells) == 4:
+                    if not check_square(island_cells):
+                        return False
+                elif len(island_cells) in (6, 7, 8):
+                    return False
+                island_cells = []
+    return True
+
+
 def add_piece(board, piece, start_row, start_col, draw=False):
     piece_width = len(piece[0])
     piece_height = len(piece)
@@ -48,6 +92,12 @@ def add_piece(board, piece, start_row, start_col, draw=False):
                     return board, legal_move
                 else:
                     new_board[start_row + i][start_col + j] = val
+
+    # check if the move created any illegal islands
+    if not legal_islands(new_board):
+        legal_move = False
+        return board, legal_move
+
     if draw:
         draw_board(new_board)
     return new_board, legal_move
@@ -179,22 +229,21 @@ sub_pieces = {
 }
 
 
-def test_positions():
-    for name, piece in pieces.items():
-        positions = get_all_positions(piece)
-        print(name, len(positions))
-
-
-full_board = [[0, 0, 0, 0, 0, 0, 0, 0].copy() for _ in range(8)]
-half_board = [[0, 0, 0, 0, 0].copy() for _ in range(4)]
-pieces = gen_piece_positions(pieces)
-# pieces = gen_piece_positions(sub_pieces)
-
-
 def solve_board(board, pieces):
+
+    global iterations
+    iterations += 1
+    if iterations % 10000 == 0:
+        draw_board(board)
+        print(iterations)
+    # activates when first piece is moved
+    if len(pieces) == 12:
+        print(iterations)
+        draw_board(board)
+
     # win condition is whole board is covered in pieces
-    # draw_board(board)
     if all([all(row) for row in board]):
+        print(iterations)
         draw_board(board)
         return board
     else:
@@ -205,12 +254,9 @@ def solve_board(board, pieces):
                 solve_board(add_piece(board, position, row, col)[0], pieces[1:])
 
 
+full_board = [[0, 0, 0, 0, 0, 0, 0, 0].copy() for _ in range(8)]
+half_board = [[0, 0, 0, 0, 0].copy() for _ in range(4)]
+pieces = gen_piece_positions(pieces)
+
+iterations = 0
 solve_board(full_board, list(pieces.values()))
-
-# for name, group in pieces.items():
-#     print(name)
-#     [draw_board(piece) for piece in group]
-#     print()
-
-# print(pieces)
-
