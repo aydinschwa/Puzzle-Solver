@@ -141,6 +141,26 @@ pieces = {
           [0, 1, 1]]
 }
 
+sub_pieces = {
+    "tree": [[1, 0],
+             [1, 1],
+             [0, 1],
+             [0, 1]],
+
+    "arm": [[1, 0],
+            [1, 1],
+            [1, 0],
+            [1, 0]],
+
+    "T": [[1, 1, 1],
+          [0, 1, 0],
+          [0, 1, 0]],
+
+    "right angle": [[1, 0, 0],
+                    [1, 0, 0],
+                    [1, 1, 1]]
+}
+
 
 def test_positions():
     for name, piece in pieces.items():
@@ -149,9 +169,9 @@ def test_positions():
 
 
 full_board = [[0, 0, 0, 0, 0, 0, 0, 0].copy() for _ in range(8)]
-half_board = [[0, 0, 0, 0].copy() for _ in range(4)]
-
+half_board = [[0, 0, 0, 0, 0].copy() for _ in range(4)]
 pieces = gen_piece_positions(pieces)
+pieces = gen_piece_positions(sub_pieces)
 
 
 def solve_board(board, pieces):
@@ -168,11 +188,11 @@ def solve_board(board, pieces):
                 solve_board(add_piece(board, position, row, col)[0], pieces[1:])
 
 
-solve_board(full_board, list(pieces.values()))
+solve_board(half_board, list(pieces.values()))
 
 # for name, group in pieces.items():
 #     print(name)
-#     [draw_board(piece) for piece in group[0:2]]
+#     [draw_board(piece) for piece in group]
 #     print()
 
 # print(pieces)
