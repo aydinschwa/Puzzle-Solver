@@ -1,5 +1,9 @@
-import cProfile
 
+
+#########################################################
+# Project: Pygame tangram interface that finds solutions
+# for arbitrary tangram configurations
+#########################################################
 
 pieces = {
 
@@ -56,31 +60,29 @@ pieces = {
 }
 
 
-color_map = {
-    1: "⬜",
-    2: "🟥",
-    3: "🟧",
-    4: "🟩",
-    5: "🟦",
-    6: "🟪",
-    7: "🟫",
-    8: "🧿",
-    9: "🌕",
-    10: "👁",
-    11: "🤢",
-    12: "😎",
-    13: "💀"
-}
+color_map = (
+    "⬛",
+    "⬜",
+    "🟥",
+    "🟧",
+    "🟩",
+    "🟦",
+    "🟪",
+    "🟫",
+    "🧿",
+    "🌕",
+    "👁",
+    "🤢",
+    "😎",
+    "💀"
+)
 
 
 def draw_board(board):
     for row in board:
         out_row = []
         for cell in row:
-            if cell == 0:
-                out_row.append("⬛")
-            else:
-                out_row.append(color_map[cell])
+            out_row.append(color_map[cell])
         print(" ".join(out_row))
     print()
 
@@ -135,7 +137,7 @@ def check_square(points):
         return False
 
 
-# use dfs to find number of distinct islands
+# use bfs to find number of distinct islands
 def legal_islands(board):
     board = [[elem for elem in row] for row in board]
     board_height = len(board)
@@ -233,6 +235,7 @@ def solve_board(board, pieces):
     # win condition is whole board is covered in pieces
     if all([all(row) for row in board]):
         print(iterations)
+        print(board)
         draw_board(board)
         return board
     else:
@@ -249,4 +252,6 @@ pieces = gen_piece_positions(pieces)
 
 iterations = 0
 terminate = False
-solve_board(full_board, list(pieces.values()))
+
+if __name__ == "__main__":
+    solve_board(full_board, list(pieces.values()))
