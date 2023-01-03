@@ -5,59 +5,61 @@
 # for arbitrary tangram configurations
 #########################################################
 
-pieces = {
+pieces = (
 
-    "ladder": [[1, 1, 0],
-               [0, 1, 1],
-               [0, 0, 1]],
+    [],
 
-    "right angle": [[2, 0, 0],
-                    [2, 0, 0],
-                    [2, 2, 2]],
+    [[1, 1, 0],
+     [0, 1, 1],
+     [0, 0, 1]],
 
-    "plus": [[0, 3, 0],
-             [3, 3, 3],
-             [0, 3, 0]],
+    [[2, 0, 0],
+     [2, 0, 0],
+     [2, 2, 2]],
 
-    "long": [[4, 4, 4, 4, 4]],
+    [[0, 3, 0],
+     [3, 3, 3],
+     [0, 3, 0]],
 
-    "big L": [[5, 0],
-              [5, 0],
-              [5, 0],
-              [5, 5]],
+    [[4, 4, 4, 4, 4]],
 
-    "square": [[6, 6],
-               [6, 6]],
+    [[5, 0],
+     [5, 0],
+     [5, 0],
+     [5, 5]],
 
-    "T": [[7, 7, 7],
-          [0, 7, 0],
-          [0, 7, 0]],
+    [[6, 6],
+     [6, 6]],
 
-    "arch": [[8, 8, 8],
-             [8, 0, 8]],
+    [[7, 7, 7],
+     [0, 7, 0],
+     [0, 7, 0]],
 
-    "house": [[9, 0],
-              [9, 9],
-              [9, 9]],
+    [[8, 8, 8],
+     [8, 0, 8]],
 
-    "twist": [[10, 10, 0],
-              [0,  10, 10],
-              [0,  10, 0]],
+    [[9, 0],
+     [9, 9],
+     [9, 9]],
 
-    "tree": [[11, 0],
-             [11, 11],
-             [0,  11],
-             [0,  11]],
+    [[10, 10, 0],
+     [0, 10, 10],
+     [0, 10, 0]],
 
-    "arm": [[12, 0],
-            [12, 12],
-            [12, 0],
-            [12, 0]],
+    [[11, 0],
+     [11, 11],
+     [0, 11],
+     [0, 11]],
 
-    "S": [[13, 13, 0],
-          [0,  13, 0],
-          [0,  13, 13]]
-}
+    [[12, 0],
+     [12, 12],
+     [12, 0],
+     [12, 0]],
+
+    [[13, 13, 0],
+     [0, 13, 0],
+     [0, 13, 13]]
+)
 
 
 color_map = (
@@ -122,9 +124,9 @@ def get_all_positions(piece):
 
 
 def gen_piece_positions(pieces):
-    piece_positions = {}
-    for name, piece in pieces.items():
-        piece_positions[name] = get_all_positions(piece)
+    piece_positions = []
+    for piece in pieces[1:]:
+        piece_positions.append(get_all_positions(piece))
     return piece_positions
 
 
@@ -178,7 +180,7 @@ def legal_islands(board):
     return True
 
 
-def add_piece(board, piece, start_row, start_col):
+def add_piece(board, piece, start_row, start_col, check_islands=True):
     piece_width = len(piece[0])
     piece_height = len(piece)
     legal_move = True
@@ -203,7 +205,7 @@ def add_piece(board, piece, start_row, start_col):
         new_board[changed_row][changed_col] = val
 
     # check if the move created any illegal islands
-    if not legal_islands(new_board):
+    if check_islands and (not legal_islands(new_board)):
         legal_move = False
         return board, legal_move
 
@@ -227,8 +229,6 @@ def solve_board(board, pieces):
     global terminate
 
     iterations += 1
-    # if iterations % 20000 == 0:
-    #     terminate = True
 
     if terminate:
         return
@@ -258,4 +258,4 @@ solutions = 0
 terminate = False
 
 if __name__ == "__main__":
-    solve_board(full_board, list(pieces.values()))
+    solve_board(full_board, pieces)
