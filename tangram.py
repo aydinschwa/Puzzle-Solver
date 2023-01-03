@@ -223,6 +223,7 @@ def get_legal_squares(board, piece):
 def solve_board(board, pieces):
 
     global iterations
+    global solutions
     global terminate
 
     iterations += 1
@@ -234,6 +235,8 @@ def solve_board(board, pieces):
 
     # win condition is whole board is covered in pieces
     if all([all(row) for row in board]):
+        solutions += 1
+        print(f"Solutions: {solutions}")
         print(iterations)
         print(board)
         draw_board(board)
@@ -251,6 +254,7 @@ half_board = [[0, 0, 0, 0, 0].copy() for _ in range(4)]
 pieces = gen_piece_positions(pieces)
 
 iterations = 0
+solutions = 0
 terminate = False
 
 if __name__ == "__main__":
