@@ -1,7 +1,6 @@
 import pygame as pg
 import sys
 
-
 pieces = {
 
     "ladder": [[1, 1, 0],
@@ -56,7 +55,7 @@ pieces = {
           [0, 13, 13]]
 }
 
-board = [[1, 1, 7, 7, 7, 2, 6, 6],
+BOARD = [[1, 1, 7, 7, 7, 2, 6, 6],
          [12, 1, 1, 7, 11, 2, 6, 6],
          [12, 12, 1, 7, 11, 2, 2, 2],
          [12, 13, 13, 11, 11, 3, 8, 8],
@@ -65,7 +64,11 @@ board = [[1, 1, 7, 7, 7, 2, 6, 6],
          [9, 9, 9, 0, 5, 5, 5, 5],
          [9, 9, 4, 4, 4, 4, 4, 5]]
 
-color_map = {
+BANK =  [[1, 1, 0, 7, 7, 7, 0, 2, 0, 6, 6],
+         [12, 0, 1, 1, 0, 7, 0, 11, 0, 2, 0, 6, 6],
+         ]
+
+COLOR_MAP = {
     1: (0, 0, 0),
     2: (255, 255, 255),
     3: (0, 255, 255),
@@ -81,6 +84,23 @@ color_map = {
     13: (128, 0, 0)
 }
 
+SCREEN_WIDTH = 1200
+SCREEN_HEIGHT = 700
+SCREEN = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+
+SQUARE_WIDTH = 50
+SQUARE_HEIGHT = 50
+SQUARE_MARGIN = 2
+
+BOARD_X_OFFSET = 50
+BOARD_Y_OFFSET = 150
+
+BANK_X_OFFSET = 500
+BANK_Y_OFFSET = 150
+
+
+BACKGROUND = pg.image.load("assets/background.jpg")
+
 
 def get_piece_positions(board):
     piece_loc_dict = {num: [] for num in range(1, 14)}
@@ -92,27 +112,20 @@ def get_piece_positions(board):
     return piece_loc_dict
 
 
-SCREEN_WIDTH = 700
-SCREEN_HEIGHT = 700
-SCREEN = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-
-SQUARE_WIDTH = 50
-SQUARE_HEIGHT = 50
-SQUARE_MARGIN = 2
-
-SQUARE_X_OFFSET = 50
-SQUARE_Y_OFFSET = 150
-
-BACKGROUND = pg.image.load("assets/background.jpg")
-
-
-def draw_piece(piece_coords):
+def draw_piece(piece_coords, board, x_offset, y_offset):
     for row, col in piece_coords:
         if board[row][col]:
-            pg.draw.rect(SCREEN, color_map[board[row][col]], [SQUARE_WIDTH * row + SQUARE_X_OFFSET,
-                                                              SQUARE_HEIGHT * col + SQUARE_Y_OFFSET,
+            pg.draw.rect(SCREEN, COLOR_MAP[board[row][col]], [SQUARE_WIDTH * col + x_offset,
+                                                              SQUARE_HEIGHT * row + y_offset,
                                                               SQUARE_WIDTH,
                                                               SQUARE_HEIGHT])
+
+
+def clear_piece(piece_val, board):
+    for i, row in enumerate(board):
+        for j, val in enumerate(row):
+            if val == piece_val:
+                board[i][j] = 0
 
 
 def main():
@@ -126,13 +139,21 @@ def main():
                 pg.quit()
                 sys.exit()
 
-        piece_positions = get_piece_positions(board)
+            if event.type == pg.MOUSEBUTTONDOWN:
+                mouse_x, mouse_y = pg.mouse.get_pos()
+                row = (mouse_y - BOARD_Y_OFFSET) // SQUARE_HEIGHT
+                col = (mouse_x - BOARD_X_OFFSET) // SQUARE_WIDTH
+                val = BOARD[row][col]
+                if val:
+                    clear_piece(val, BOARD)
+
+        # draw board pieces
+        piece_positions = get_piece_positions(BOARD)
         for piece_coord in piece_positions.values():
-            draw_piece(piece_coord)
+            draw_piece(piece_coord, BOARD, BOARD_X_OFFSET, BOARD_Y_OFFSET)
 
         pg.display.update()
 
 
 if __name__ == "__main__":
-    full_board = [[0, 0, 0, 0, 0, 0, 0, 0].copy() for _ in range(8)]
     main()
