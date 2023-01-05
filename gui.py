@@ -1,117 +1,7 @@
 import pygame as pg
 from tangram import *
+from setup import *
 import sys
-
-pieces = (
-
-    [],
-
-    [[1, 1, 0],
-     [0, 1, 1],
-     [0, 0, 1]],
-
-    [[2, 0, 0],
-     [2, 0, 0],
-     [2, 2, 2]],
-
-    [[0, 3, 0],
-     [3, 3, 3],
-     [0, 3, 0]],
-
-    [[4, 4, 4, 4, 4]],
-
-    [[5, 0],
-     [5, 0],
-     [5, 0],
-     [5, 5]],
-
-    [[6, 6],
-     [6, 6]],
-
-    [[7, 7, 7],
-     [0, 7, 0],
-     [0, 7, 0]],
-
-    [[8, 8, 8],
-     [8, 0, 8]],
-
-    [[9, 0],
-     [9, 9],
-     [9, 9]],
-
-    [[10, 10, 0],
-     [0, 10, 10],
-     [0, 10, 0]],
-
-    [[11, 0],
-     [11, 11],
-     [0, 11],
-     [0, 11]],
-
-    [[12, 0],
-     [12, 12],
-     [12, 0],
-     [12, 0]],
-
-    [[13, 13, 0],
-     [0, 13, 0],
-     [0, 13, 13]]
-)
-
-BOARD = [[1, 1, 7, 7, 7, 2, 6, 6],
-         [12, 1, 1, 7, 11, 2, 6, 6],
-         [12, 12, 1, 7, 11, 2, 2, 2],
-         [12, 13, 13, 11, 11, 3, 8, 8],
-         [12, 13, 0, 11, 3, 3, 3, 8],
-         [13, 13, 0, 0, 0, 3, 8, 8],
-         [9, 9, 9, 0, 5, 5, 5, 5],
-         [9, 9, 4, 4, 4, 4, 4, 5]]
-
-BOARD = [[0, 0, 0, 0, 0, 0, 0, 0].copy() for _ in range(8)]
-BOARD_BUFFER = [[0, 0, 0, 0, 0, 0, 0, 0].copy() for _ in range(8)]
-
-
-COLOR_MAP = {
-    1: (0, 0, 0),
-    2: (255, 255, 255),
-    3: (0, 255, 255),
-    4: (0, 0, 255),
-    5: (255, 0, 255),
-    6: (255, 255, 0),
-    7: (128, 128, 128),
-    8: (255, 0, 0),
-    9: (0, 255, 0),
-    10: (45, 170, 45),
-    11: (128, 0, 255),
-    12: (255, 128, 0),
-    13: (128, 0, 0)
-}
-
-CURRENT_PIECE = reflect_piece_y(rotate_piece(pieces[10]))
-# UNUSED_PIECES = [10]
-UNUSED_PIECES = [num for num in range(1, 14)]
-
-SCREEN_WIDTH = 700
-SCREEN_HEIGHT = 800
-SCREEN = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-
-SQUARE_WIDTH = 50
-SQUARE_HEIGHT = 50
-SQUARE_MARGIN = 2
-
-BOARD_X_OFFSET = 145
-BOARD_Y_OFFSET = 120
-
-CURR_PIECE_X_OFFSET = 260
-CURR_PIECE_Y_OFFSET = 540
-
-LINE_THICKNESS = 5
-
-BACKGROUND = pg.image.load("assets/background.jpg")
-
-iterations = 0
-solutions = None
-terminate = False
 
 
 def get_piece_positions(board):
@@ -195,17 +85,75 @@ def main():
     pg.init()
     pg.display.set_caption("Tangrams")
 
+    game_state = "play"
+
     global BOARD
     global BOARD_BUFFER
     global CURRENT_PIECE
     global UNUSED_PIECES
     piece_idx_pointer = 0
 
+    global iterations
+    global solution
+    global terminate
+
     DRAW_BUFFER = pg.USEREVENT + 1
     pg.time.set_timer(DRAW_BUFFER, 100)
 
     while True:
+
+        # draw background
         SCREEN.blit(pg.transform.scale(BACKGROUND, (SCREEN_WIDTH, SCREEN_HEIGHT)), (0, 0))
+
+        if game_state != "play":
+            SCREEN.blit(pg.transform.scale(BACKGROUND, (SCREEN_WIDTH, SCREEN_HEIGHT)), (0, 0))
+            num_iterations_text = NUM_ITERATIONS_FONT.render(f"No Solutions Found!", True, (0, 0, 0))
+            num_iterations_rect = num_iterations_text.get_rect()
+            num_iterations_rect.center = (SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
+            SCREEN.blit(num_iterations_text, num_iterations_rect)
+            pg.display.update()
+
+            for event in pg.event.get():
+                if event.type == pg.KEYDOWN:
+                    game_state = "play"
+
+            continue
+
+        # draw title
+        title_word = TITLE_FONT.render("TANGRAMS", True, (0, 0, 0))
+        title_rect = title_word.get_rect()
+        title_rect.center = (SCREEN_WIDTH / 2, SCREEN_HEIGHT / 10.2)
+        SCREEN.blit(title_word, title_rect)
+
+        # draw "current piece"
+        if UNUSED_PIECES:
+            current_piece_text = NUM_ITERATIONS_FONT.render("Current Piece: ", True, (0, 0, 0))
+            current_piece_rect = current_piece_text.get_rect()
+            current_piece_rect.center = (SCREEN_WIDTH / 5, SCREEN_HEIGHT / 1.25)
+            SCREEN.blit(current_piece_text, current_piece_rect)
+
+        # draw number of iterations
+        if not UNUSED_PIECES:
+            num_iterations_text = NUM_ITERATIONS_FONT.render(f"Board Positions Searched: {iterations}", True, (0, 0, 0))
+            num_iterations_rect = num_iterations_text.get_rect()
+            num_iterations_rect.center = (SCREEN_WIDTH / 2, SCREEN_HEIGHT / 1.3)
+            SCREEN.blit(num_iterations_text, num_iterations_rect)
+
+        # draw board pieces
+        piece_positions = get_piece_positions(BOARD)
+        for piece_coord in piece_positions.values():
+            draw_piece(piece_coord, BOARD, BOARD_X_OFFSET, BOARD_Y_OFFSET)
+
+        # draw buffer pieces
+        piece_positions = get_piece_positions(BOARD_BUFFER)
+        for piece_coord in piece_positions.values():
+            draw_piece(piece_coord, BOARD_BUFFER, BOARD_X_OFFSET, BOARD_Y_OFFSET)
+
+        # draw current piece
+        piece_positions = get_piece_positions(CURRENT_PIECE)
+        for piece_coord in piece_positions.values():
+            draw_piece(piece_coord, CURRENT_PIECE, CURR_PIECE_X_OFFSET, CURR_PIECE_Y_OFFSET)
+
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 pg.quit()
@@ -234,8 +182,18 @@ def main():
                                     to_remove = val
                                     break
                         UNUSED_PIECES.remove(to_remove)
-                        CURRENT_PIECE = pieces[UNUSED_PIECES[0]]
+                        if not UNUSED_PIECES:
+                            solution = BOARD
+                            CURRENT_PIECE = [[]]
+                        else:
+                            CURRENT_PIECE = PIECES[UNUSED_PIECES[0]]
                         piece_idx_pointer = 0
+
+                    # special case for when puzzle is solved
+                    elif not UNUSED_PIECES:
+                        clear_piece(val, BOARD)
+                        UNUSED_PIECES.append(val)
+                        CURRENT_PIECE = PIECES[UNUSED_PIECES[0]]
 
             if event.type == pg.KEYDOWN:
 
@@ -248,27 +206,34 @@ def main():
                 # cycle through unused pieces
                 if event.key == pg.K_RIGHT or event.key == pg.K_SPACE:
                     piece_idx_pointer = (piece_idx_pointer + 1) % len(UNUSED_PIECES)
-                    CURRENT_PIECE = pieces[UNUSED_PIECES[piece_idx_pointer]]
+                    CURRENT_PIECE = PIECES[UNUSED_PIECES[piece_idx_pointer]]
 
                 if event.key == pg.K_LEFT:
                     piece_idx_pointer = (piece_idx_pointer - 1) % len(UNUSED_PIECES)
-                    CURRENT_PIECE = pieces[UNUSED_PIECES[piece_idx_pointer]]
+                    CURRENT_PIECE = PIECES[UNUSED_PIECES[piece_idx_pointer]]
 
                 # solve puzzle
                 if event.key == pg.K_s:
-                    unused_pieces = [pieces[idx] for idx in UNUSED_PIECES]
+                    unused_pieces = [PIECES[idx] for idx in UNUSED_PIECES]
                     unused_pieces = gen_piece_positions([0] + unused_pieces)
-                    global iterations
-                    global solution
-                    global terminate
+
                     iterations = 0
-                    solution = None
+                    solution = []
                     terminate = False
                     solve_board(BOARD, unused_pieces)
                     if solution:
-                        print(solution)
+                        BOARD = solution
+                        piece_positions = get_piece_positions(solution)
+                        for piece_coord in piece_positions.values():
+                            draw_piece(piece_coord, BOARD, BOARD_X_OFFSET, BOARD_Y_OFFSET)
+                            draw_board_outline()
+                            pg.display.update()
+                            pg.time.wait(250)
+                        UNUSED_PIECES = []
+                        CURRENT_PIECE = [[]]
+
                     else:
-                        print("No solutions found!")
+                        game_state = "fail"
 
             # draw preview of placement of the current tile
             if event.type == DRAW_BUFFER:
@@ -282,25 +247,13 @@ def main():
                     if (row, col) in legal_moves:
                         BOARD_BUFFER, _ = add_piece(BOARD_BUFFER, CURRENT_PIECE, row, col, False)
 
-        # draw board pieces
-        piece_positions = get_piece_positions(BOARD)
-        for piece_coord in piece_positions.values():
-            draw_piece(piece_coord, BOARD, BOARD_X_OFFSET, BOARD_Y_OFFSET)
-
-        # draw buffer pieces
-        piece_positions = get_piece_positions(BOARD_BUFFER)
-        for piece_coord in piece_positions.values():
-            draw_piece(piece_coord, BOARD_BUFFER, BOARD_X_OFFSET, BOARD_Y_OFFSET)
-
-        # draw current piece
-        piece_positions = get_piece_positions(CURRENT_PIECE)
-        for piece_coord in piece_positions.values():
-            draw_piece(piece_coord, CURRENT_PIECE, CURR_PIECE_X_OFFSET, CURR_PIECE_Y_OFFSET)
-
         draw_board_outline()
 
         pg.display.update()
 
 
 if __name__ == "__main__":
+    iterations = 0
+    solution = []
+    terminate = False
     main()
