@@ -1,261 +1,251 @@
 
 
-#########################################################
-# Project: Pygame tangram interface that finds solutions
-# for arbitrary tangram configurations
-#########################################################
+class TangramSolver:
 
-pieces = (
+    def __init__(self):
 
-    [],
+        self.pieces = (
 
-    [[1, 1, 0],
-     [0, 1, 1],
-     [0, 0, 1]],
+            [],
 
-    [[2, 0, 0],
-     [2, 0, 0],
-     [2, 2, 2]],
+            [[1, 1, 0],
+             [0, 1, 1],
+             [0, 0, 1]],
 
-    [[0, 3, 0],
-     [3, 3, 3],
-     [0, 3, 0]],
+            [[2, 0, 0],
+             [2, 0, 0],
+             [2, 2, 2]],
 
-    [[4, 4, 4, 4, 4]],
+            [[0, 3, 0],
+             [3, 3, 3],
+             [0, 3, 0]],
 
-    [[5, 0],
-     [5, 0],
-     [5, 0],
-     [5, 5]],
+            [[4, 4, 4, 4, 4]],
 
-    [[6, 6],
-     [6, 6]],
+            [[5, 0],
+             [5, 0],
+             [5, 0],
+             [5, 5]],
 
-    [[7, 7, 7],
-     [0, 7, 0],
-     [0, 7, 0]],
+            [[6, 6],
+             [6, 6]],
 
-    [[8, 8, 8],
-     [8, 0, 8]],
+            [[7, 7, 7],
+             [0, 7, 0],
+             [0, 7, 0]],
 
-    [[9, 0],
-     [9, 9],
-     [9, 9]],
+            [[8, 8, 8],
+             [8, 0, 8]],
 
-    [[10, 10, 0],
-     [0, 10, 10],
-     [0, 10, 0]],
+            [[9, 0],
+             [9, 9],
+             [9, 9]],
 
-    [[11, 0],
-     [11, 11],
-     [0, 11],
-     [0, 11]],
+            [[10, 10, 0],
+             [0, 10, 10],
+             [0, 10, 0]],
 
-    [[12, 0],
-     [12, 12],
-     [12, 0],
-     [12, 0]],
+            [[11, 0],
+             [11, 11],
+             [0, 11],
+             [0, 11]],
 
-    [[13, 13, 0],
-     [0, 13, 0],
-     [0, 13, 13]]
-)
+            [[12, 0],
+             [12, 12],
+             [12, 0],
+             [12, 0]],
 
+            [[13, 13, 0],
+             [0, 13, 0],
+             [0, 13, 13]]
+        )
 
-color_map = (
-    "⬛",
-    "⬜",
-    "🟥",
-    "🟧",
-    "🟩",
-    "🟦",
-    "🟪",
-    "🟫",
-    "🧿",
-    "🌕",
-    "👁",
-    "🤢",
-    "😎",
-    "💀"
-)
+        self.color_map = (
+            "⬛",
+            "⬜",
+            "🟥",
+            "🟧",
+            "🟩",
+            "🟦",
+            "🟪",
+            "🟫",
+            "🧿",
+            "🌕",
+            "👁",
+            "🤢",
+            "😎",
+            "💀"
+        )
 
+        self.board = [[0, 0, 0, 0, 0, 0, 0, 0].copy() for _ in range(8)]
+        self.pieces = self.gen_piece_positions(self.pieces)
 
-def draw_board(board):
-    for row in board:
-        out_row = []
-        for cell in row:
-            out_row.append(color_map[cell])
-        print(" ".join(out_row))
-    print()
+        self.iterations = 0
+        self.solutions = 0
+        self.terminate = False
 
+    def draw_board(self, board):
+        for row in board:
+            out_row = []
+            for cell in row:
+                out_row.append(self.color_map[cell])
+            print(" ".join(out_row))
+        print()
 
-def rotate_piece(piece):
-    return [list(row[::-1]) for row in zip(*piece)]
+    @staticmethod
+    def rotate_piece(piece):
+        return [list(row[::-1]) for row in zip(*piece)]
 
+    def get_rotations(self, piece):
+        unique_rotations = [piece]
+        for _ in range(3):
+            piece = self.rotate_piece(piece)
+            if piece not in unique_rotations:
+                unique_rotations.append(piece)
 
-def get_rotations(piece):
-    unique_rotations = [piece]
-    for _ in range(3):
-        piece = rotate_piece(piece)
-        if piece not in unique_rotations:
-            unique_rotations.append(piece)
+        return unique_rotations, len(unique_rotations)
 
-    return unique_rotations, len(unique_rotations)
+    @staticmethod
+    def reflect_piece_x(piece):
+        return piece[::-1]
 
+    @staticmethod
+    def reflect_piece_y(piece):
+        return [row[::-1] for row in piece]
 
-def reflect_piece_x(piece):
-    return piece[::-1]
+    def get_all_positions(self, piece):
+        positions, _ = self.get_rotations(piece)
+        for pos in positions:
+            y_reflect = self.reflect_piece_y(pos)
+            x_reflect = self.reflect_piece_x(pos)
+            if y_reflect not in positions:
+                positions.append(y_reflect)
+            if x_reflect not in positions:
+                positions.append(x_reflect)
+        return positions
 
+    def gen_piece_positions(self, pieces):
+        piece_positions = []
+        for piece in pieces[1:]:
+            piece_positions.append(self.get_all_positions(piece))
+        return piece_positions
 
-def reflect_piece_y(piece):
-    return [row[::-1] for row in piece]
+    @staticmethod
+    def check_square(points):
+        x_vals = [tup[0] for tup in points]
+        y_vals = [tup[1] for tup in points]
+        if (max(x_vals) - min(x_vals) == 1) and (max(y_vals) - min(y_vals) == 1):
+            return True
+        else:
+            return False
 
+    def legal_islands(self, board):
+        # use bfs to find number of distinct islands
+        board = [[elem for elem in row] for row in board]
+        board_height = len(board)
+        board_width = len(board[0])
+        island_cells = []
 
-def get_all_positions(piece):
-    positions, _ = get_rotations(piece)
-    for pos in positions:
-        y_reflect = reflect_piece_y(pos)
-        x_reflect = reflect_piece_x(pos)
-        if y_reflect not in positions:
-            positions.append(y_reflect)
-        if x_reflect not in positions:
-            positions.append(x_reflect)
-    return positions
+        def island_bfs(row, col):
+            cell_queue = [(row, col)]
 
+            while cell_queue:
+                row, col = cell_queue.pop()
+                island_cells.append((row, col))
+                board[row][col] = "#"
+                for row_offset, col_offset in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
+                    temp_row = row + row_offset
+                    temp_col = col + col_offset
+                    if 0 <= temp_row < board_height and 0 <= temp_col < board_width and board[temp_row][temp_col] == 0:
+                        cell_queue.append((temp_row, temp_col))
 
-def gen_piece_positions(pieces):
-    piece_positions = []
-    for piece in pieces[1:]:
-        piece_positions.append(get_all_positions(piece))
-    return piece_positions
+        for row in range(board_height):
+            for col in range(board_width):
+                if board[row][col] == 0:
+                    island_bfs(row, col)
+                    island_size = len(island_cells)
 
-
-def check_square(points):
-    x_vals = [tup[0] for tup in points]
-    y_vals = [tup[1] for tup in points]
-    if (max(x_vals) - min(x_vals) == 1) and (max(y_vals) - min(y_vals) == 1):
-        return True
-    else:
-        return False
-
-
-# use bfs to find number of distinct islands
-def legal_islands(board):
-    board = [[elem for elem in row] for row in board]
-    board_height = len(board)
-    board_width = len(board[0])
-    island_cells = []
-
-    def island_bfs(row, col):
-        cell_queue = [(row, col)]
-        if row < 0 or col < 0 or row >= board_height or col >= board_width or board[row][col] != 0:
-            pass
-        while cell_queue:
-            row, col = cell_queue.pop()
-            island_cells.append((row, col))
-            board[row][col] = "#"
-            if row > 0 and board[row - 1][col] == 0:
-                cell_queue.append((row - 1, col))
-            if col > 0 and board[row][col - 1] == 0:
-                cell_queue.append((row, col - 1))
-            if row < board_height - 1 and board[row + 1][col] == 0:
-                cell_queue.append((row + 1, col))
-            if col < board_width - 1 and board[row][col + 1] == 0:
-                cell_queue.append((row, col + 1))
-
-    for row in range(board_height):
-        for col in range(board_width):
-            if board[row][col] == 0:
-                island_bfs(row, col)
-                island_size = len(island_cells)
-
-                if island_size < 4:
-                    return False
-                elif island_size == 4:
-                    if not check_square(island_cells):
+                    # islands smaller than 4 are illegal
+                    if island_size < 4:
                         return False
-                elif island_size in (6, 7, 8):
-                    return False
-                island_cells = []
-    return True
 
+                    # only allow square shapes for islands of size 4
+                    elif island_size == 4:
+                        if not self.check_square(island_cells.copy()):
+                            return False
 
-def add_piece(board, piece, start_row, start_col, check_islands=True):
-    piece_width = len(piece[0])
-    piece_height = len(piece)
-    legal_move = True
-    if (start_row + piece_height > len(board)) or (start_col + piece_width > len(board[0])):
-        legal_move = False
-        return board, legal_move
+                    # islands of size 6,7, and 8 are impossible
+                    elif island_size in (6, 7, 8):
+                        return False
 
-    changed_squares = []
-    for i, row in enumerate(piece):
-        for j, val in enumerate(row):
-            # only add filled spaces, never take away
-            if val != 0:
-                # don't overwrite existing pieces on the board
-                if board[start_row + i][start_col + j] != 0:
-                    legal_move = False
-                    return board, legal_move
-                else:
-                    changed_squares.append((start_row + i, start_col + j, val))
+                    island_cells = []
+        return True
 
-    new_board = [[val for val in row] for row in board]
-    for changed_row, changed_col, val in changed_squares:
-        new_board[changed_row][changed_col] = val
+    def add_piece(self, board, piece, start_row, start_col, check_islands=True):
+        piece_width = len(piece[0])
+        piece_height = len(piece)
+        legal_move = True
+        if (start_row + piece_height > len(board)) or (start_col + piece_width > len(board[0])):
+            legal_move = False
+            return board, legal_move
 
-    # check if the move created any illegal islands
-    if check_islands and (not legal_islands(new_board)):
-        legal_move = False
-        return board, legal_move
+        changed_squares = []
+        for i, row in enumerate(piece):
+            for j, val in enumerate(row):
+                # only add filled spaces, never take away
+                if val != 0:
+                    # don't overwrite existing pieces on the board
+                    if board[start_row + i][start_col + j] != 0:
+                        legal_move = False
+                        return board, legal_move
+                    else:
+                        changed_squares.append((start_row + i, start_col + j, val))
 
-    return new_board, legal_move
+        new_board = [[val for val in row] for row in board]
+        for changed_row, changed_col, val in changed_squares:
+            new_board[changed_row][changed_col] = val
 
+        # check if the move created any illegal islands
+        if check_islands and (not self.legal_islands(new_board)):
+            legal_move = False
+            return board, legal_move
 
-def get_legal_squares(board, piece):
-    legal_moves = []
-    for row in range(len(board)):
-        for col in range(len(board[0])):
-            _, legal_move = add_piece(board, piece, row, col)
-            if legal_move:
-                legal_moves.append((row, col))
-    return legal_moves
+        return new_board, legal_move
 
+    def get_legal_squares(self, board, piece, check_islands=True):
+        legal_moves = []
+        for row in range(len(board)):
+            for col in range(len(board[0])):
+                _, legal_move = self.add_piece(board, piece, row, col, check_islands)
+                if legal_move:
+                    legal_moves.append((row, col))
+        return legal_moves
 
-def solve_board(board, pieces):
+    def solve_board(self, board, pieces):
 
-    global iterations
-    global solutions
-    global terminate
+        self.iterations += 1
 
-    iterations += 1
+        if self.terminate:
+            return
 
-    if terminate:
-        return
+        # win condition is whole board is covered in pieces
+        if all([all(row) for row in board]):
+            self.solutions += 1
+            print(f"Solutions: {self.solutions}")
+            print(self.iterations)
+            self.draw_board(board)
+            return board
+        else:
+            piece_positions = pieces[0]
+            for position in piece_positions:
+                legal_squares = self.get_legal_squares(board, position)
+                for row, col in legal_squares:
+                    self.solve_board(self.add_piece(board, position, row, col)[0], pieces[1:])
 
-    # win condition is whole board is covered in pieces
-    if all([all(row) for row in board]):
-        solutions += 1
-        print(f"Solutions: {solutions}")
-        print(iterations)
-        print(board)
-        draw_board(board)
-        return board
-    else:
-        piece_positions = pieces[0]
-        for position in piece_positions:
-            legal_squares = get_legal_squares(board, position)
-            for row, col in legal_squares:
-                solve_board(add_piece(board, position, row, col)[0], pieces[1:])
+    def run(self):
+        self.solve_board(self.board, self.pieces)
 
-
-full_board = [[0, 0, 0, 0, 0, 0, 0, 0].copy() for _ in range(8)]
-half_board = [[0, 0, 0, 0, 0].copy() for _ in range(4)]
-pieces = gen_piece_positions(pieces)
-
-iterations = 0
-solutions = 0
-terminate = False
 
 if __name__ == "__main__":
-    solve_board(full_board, pieces)
+
+    TangramSolver().run()
