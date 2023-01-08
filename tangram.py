@@ -1,3 +1,4 @@
+import pickle
 
 
 class TangramSolver:
@@ -79,9 +80,8 @@ class TangramSolver:
 
         self.board = [[0, 0, 0, 0, 0, 0, 0, 0].copy() for _ in range(8)]
         self.piece_positions = self.gen_piece_positions(self.pieces)
-
         self.iterations = 0
-        self.solutions = 0
+        self.solutions = []
         self.terminate = False
 
     def draw_board(self, board):
@@ -193,9 +193,9 @@ class TangramSolver:
         for i, row in enumerate(piece):
             for j, val in enumerate(row):
                 # only add filled spaces, never take away
-                if val != 0:
+                if val:
                     # don't overwrite existing pieces on the board
-                    if board[start_row + i][start_col + j] != 0:
+                    if board[start_row + i][start_col + j]:
                         legal_move = False
                         return board, legal_move
                     else:
@@ -230,8 +230,8 @@ class TangramSolver:
 
         # win condition is whole board is covered in pieces
         if all([all(row) for row in board]):
-            self.solutions += 1
-            print(f"Solutions: {self.solutions}")
+            self.solutions.append(board)
+            print(f"Solutions: {len(self.solutions)}")
             print(self.iterations)
             self.draw_board(board)
             return board
@@ -242,10 +242,14 @@ class TangramSolver:
                 for row, col in legal_squares:
                     self.solve_board(self.add_piece(board, position, row, col)[0], pieces[1:])
 
-    def run(self):
+    def run(self, save_results=False):
         self.solve_board(self.board, self.piece_positions)
+
+        if save_results:
+            FileStore = open("stored_objects/solutions.pickle", "wb")
+            pickle.dump(self.solutions, FileStore)
+            FileStore.close()
 
 
 if __name__ == "__main__":
-
     TangramSolver().run()
