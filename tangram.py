@@ -221,9 +221,14 @@ class TangramSolver:
                     legal_moves.append((row, col))
         return legal_moves
 
-    def solve_board(self, board, pieces):
+    def solve_board(self, board, pieces, save_results=False):
 
         self.iterations += 1
+
+        if (self.iterations % 10_000_000 == 0) and save_results:
+            FileStore = open("stored_objects/solutions.pickle", "wb")
+            pickle.dump(self.solutions, FileStore)
+            FileStore.close()
 
         if self.terminate:
             return
@@ -240,10 +245,10 @@ class TangramSolver:
             for position in piece_positions:
                 legal_squares = self.get_legal_squares(board, position)
                 for row, col in legal_squares:
-                    self.solve_board(self.add_piece(board, position, row, col)[0], pieces[1:])
+                    self.solve_board(self.add_piece(board, position, row, col)[0], pieces[1:], save_results)
 
     def run(self, save_results=False):
-        self.solve_board(self.board, self.piece_positions)
+        self.solve_board(self.board, self.piece_positions, save_results)
 
         if save_results:
             FileStore = open("stored_objects/solutions.pickle", "wb")
@@ -252,4 +257,4 @@ class TangramSolver:
 
 
 if __name__ == "__main__":
-    TangramSolver().run()
+    TangramSolver().run(save_results=True)
