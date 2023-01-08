@@ -78,7 +78,7 @@ class TangramSolver:
         )
 
         self.board = [[0, 0, 0, 0, 0, 0, 0, 0].copy() for _ in range(8)]
-        self.pieces = self.gen_piece_positions(self.pieces)
+        self.piece_positions = self.gen_piece_positions(self.pieces)
 
         self.iterations = 0
         self.solutions = 0
@@ -171,7 +171,7 @@ class TangramSolver:
 
                     # only allow square shapes for islands of size 4
                     elif island_size == 4:
-                        if not self.check_square(island_cells.copy()):
+                        if not self.check_square(island_cells):
                             return False
 
                     # islands of size 6,7, and 8 are impossible
@@ -243,7 +243,7 @@ class TangramSolver:
                     self.solve_board(self.add_piece(board, position, row, col)[0], pieces[1:])
 
     def run(self):
-        self.solve_board(self.board, self.pieces)
+        self.solve_board(self.board, self.piece_positions)
 
 
 if __name__ == "__main__":
