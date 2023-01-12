@@ -236,9 +236,8 @@ class TangramSolver:
         # win condition is whole board is covered in pieces
         if all([all(row) for row in board]):
             self.solutions.append(board)
-            print(f"Solutions: {len(self.solutions)}")
-            print(self.iterations)
-            self.draw_board(board)
+            print(f"Solutions: {len(self.solutions):,}")
+            print(f"Iterations: {self.iterations:,}\n")
             return board
         else:
             piece_positions = pieces[0]
