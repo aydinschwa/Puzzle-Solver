@@ -226,7 +226,7 @@ class TangramSolver:
         self.iterations += 1
 
         if (self.iterations % 10_000_000 == 0) and save_results:
-            FileStore = open("stored_objects/solutions.pickle", "wb")
+            FileStore = open("stored_objects/solutions_duplicates.pickle", "wb")
             pickle.dump(self.solutions, FileStore)
             FileStore.close()
 
@@ -250,7 +250,7 @@ class TangramSolver:
         self.solve_board(self.board, self.piece_positions, save_results)
 
         if save_results:
-            FileStore = open("stored_objects/solutions.pickle", "wb")
+            FileStore = open("stored_objects/solutions_duplicates.pickle", "wb")
             pickle.dump(self.solutions, FileStore)
             FileStore.close()
 
