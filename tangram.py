@@ -210,7 +210,7 @@ class TangramSolver:
                     legal_moves.append((row, col))
         return legal_moves
 
-    def solve_board(self, board, pieces, save_results=False):
+    def solve_board(self, board, pieces):
 
         self.iterations += 1
 
@@ -229,7 +229,7 @@ class TangramSolver:
             for position in piece_positions:
                 legal_squares = self.get_legal_squares(board, position)
                 for row, col in legal_squares:
-                    self.solve_board(self.add_piece(board, position, row, col)[0], pieces[1:], save_results)
+                    self.solve_board(self.add_piece(board, position, row, col)[0], pieces[1:])
 
     def run(self):
         self.solve_board(self.board, self.piece_positions)
