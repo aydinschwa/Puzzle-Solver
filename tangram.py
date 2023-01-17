@@ -1,4 +1,3 @@
-import pickle
 
 
 class TangramSolver:
@@ -137,15 +136,7 @@ class TangramSolver:
         return piece_positions
 
     @staticmethod
-    def check_square(points):
-        x_vals = [tup[0] for tup in points]
-        y_vals = [tup[1] for tup in points]
-        if (max(x_vals) - min(x_vals) == 1) and (max(y_vals) - min(y_vals) == 1):
-            return True
-        else:
-            return False
-
-    def legal_islands(self, board):
+    def legal_islands(board):
         # use bfs to find number of distinct islands
         board = [[elem for elem in row] for row in board]
         board_height = len(board)
@@ -223,11 +214,6 @@ class TangramSolver:
 
         self.iterations += 1
 
-        if (self.iterations % 10_000_000 == 0) and save_results:
-            FileStore = open("stored_objects/solutions_duplicates.pickle", "wb")
-            pickle.dump(self.solutions, FileStore)
-            FileStore.close()
-
         if self.terminate:
             return
 
@@ -236,6 +222,7 @@ class TangramSolver:
             self.solutions.append(board)
             print(f"Solutions: {len(self.solutions):,}")
             print(f"Iterations: {self.iterations:,}\n")
+            self.draw_board(board)
             return board
         else:
             piece_positions = pieces[0]
@@ -244,14 +231,9 @@ class TangramSolver:
                 for row, col in legal_squares:
                     self.solve_board(self.add_piece(board, position, row, col)[0], pieces[1:], save_results)
 
-    def run(self, save_results=False):
-        self.solve_board(self.board, self.piece_positions, save_results)
-
-        if save_results:
-            FileStore = open("stored_objects/solutions_duplicates.pickle", "wb")
-            pickle.dump(self.solutions, FileStore)
-            FileStore.close()
+    def run(self):
+        self.solve_board(self.board, self.piece_positions)
 
 
 if __name__ == "__main__":
-    TangramSolver().run(save_results=False)
+    TangramSolver().run()
