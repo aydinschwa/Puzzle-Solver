@@ -9,9 +9,8 @@ class TangramSolver:
 
             [],
 
-            [[1, 1, 0],
-             [0, 1, 1],
-             [0, 0, 1]],
+            [[1, 1],
+             [1, 1]],
 
             [[2, 0, 0],
              [2, 0, 0],
@@ -28,8 +27,9 @@ class TangramSolver:
              [5, 0],
              [5, 5]],
 
-            [[6, 6],
-             [6, 6]],
+            [[6, 6, 0],
+             [0, 6, 6],
+             [0, 0, 6]],
 
             [[7, 7, 7],
              [0, 7, 0],
@@ -80,6 +80,12 @@ class TangramSolver:
 
         self.board = [[0, 0, 0, 0, 0, 0, 0, 0].copy() for _ in range(8)]
         self.piece_positions = self.gen_piece_positions(self.pieces)
+
+        # only generate one position for piece 10 to avoid duplicating board positions
+        for i, positions in enumerate(self.piece_positions):
+            if i == 9:
+                self.piece_positions[i] = [positions[0]]
+
         self.iterations = 0
         self.solutions = []
         self.terminate = False
@@ -151,6 +157,8 @@ class TangramSolver:
 
             while cell_queue:
                 row, col = cell_queue.pop()
+                if board[row][col] != 0:
+                    continue
                 island_cells.append((row, col))
                 board[row][col] = "#"
                 for row_offset, col_offset in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
@@ -165,17 +173,7 @@ class TangramSolver:
                     island_bfs(row, col)
                     island_size = len(island_cells)
 
-                    # islands smaller than 4 are illegal
-                    if island_size < 4:
-                        return False
-
-                    # only allow square shapes for islands of size 4
-                    elif island_size == 4:
-                        if not self.check_square(island_cells):
-                            return False
-
-                    # islands of size 6,7, and 8 are impossible
-                    elif island_size in (6, 7, 8):
+                    if island_size % 5 != 0:
                         return False
 
                     island_cells = []
@@ -256,4 +254,4 @@ class TangramSolver:
 
 
 if __name__ == "__main__":
-    TangramSolver().run(save_results=True)
+    TangramSolver().run(save_results=False)
