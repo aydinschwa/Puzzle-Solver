@@ -19,7 +19,7 @@ class TangramGame(TangramSolver):
 
         self.piece_idx_pointer = 0
 
-        self.game_state = 1
+        self.game_state = "start"
 
         self.draw_buffer_event = pg.USEREVENT + 1
         pg.time.set_timer(self.draw_buffer_event, 100)
@@ -93,6 +93,31 @@ class TangramGame(TangramSolver):
         SCREEN.blit(num_iterations_text, num_iterations_rect)
         pg.display.update()
 
+    def draw_start_state(self):
+        SCREEN.blit(pg.transform.scale(BACKGROUND, (SCREEN_WIDTH, SCREEN_HEIGHT)), (0, 0))
+        self.draw_title()
+        instructions_text = NUM_ITERATIONS_FONT.render(f"Cycle through pieces with left", True, (0, 0, 0))
+        instructions_rect = instructions_text.get_rect()
+        instructions_rect.center = (SCREEN_WIDTH / 2, SCREEN_HEIGHT / 3)
+        SCREEN.blit(instructions_text, instructions_rect)
+
+        instructions_text2 = NUM_ITERATIONS_FONT.render(f"and right arrow keys", True, (0, 0, 0))
+        instructions_rect2 = instructions_text2.get_rect()
+        instructions_rect2.center = (SCREEN_WIDTH / 2, SCREEN_HEIGHT / 3 + 75)
+        SCREEN.blit(instructions_text2, instructions_rect2)
+
+        instructions_text3 = NUM_ITERATIONS_FONT.render(f"Rotate and flip with R and F", True, (0, 0, 0))
+        instructions_rect3 = instructions_text3.get_rect()
+        instructions_rect3.center = (SCREEN_WIDTH / 2, SCREEN_HEIGHT / 3 + 150)
+        SCREEN.blit(instructions_text3, instructions_rect3)
+
+        instructions_text4 = NUM_ITERATIONS_FONT.render(f"Solve the puzzle with S", True, (0, 0, 0))
+        instructions_rect4 = instructions_text4.get_rect()
+        instructions_rect4.center = (SCREEN_WIDTH / 2, SCREEN_HEIGHT / 3 + 225)
+        SCREEN.blit(instructions_text4, instructions_rect4)
+
+        pg.display.update()
+
     def draw_text(self):
         if self.unused_pieces:
             current_piece_text = NUM_ITERATIONS_FONT.render("Current Piece: ", True, (0, 0, 0))
@@ -158,6 +183,62 @@ class TangramGame(TangramSolver):
             self.unused_pieces.append(val)
             self.current_piece = self.pieces[self.unused_pieces[0]]
 
+    # need to use dumb way of checking islands since can't guarantee that
+    # square is the first piece on the board anymore
+    @staticmethod
+    def check_square(points):
+        x_vals = [tup[0] for tup in points]
+        y_vals = [tup[1] for tup in points]
+        if (max(x_vals) - min(x_vals) == 1) and (max(y_vals) - min(y_vals) == 1):
+            return True
+        else:
+            return False
+
+    def legal_islands(self, board):
+        # use bfs to find number of distinct islands
+        board = [[elem for elem in row] for row in board]
+        board_height = len(board)
+        board_width = len(board[0])
+        island_cells = []
+
+        def island_bfs(row, col):
+            cell_queue = [(row, col)]
+
+            while cell_queue:
+                row, col = cell_queue.pop()
+                if board[row][col] != 0:
+                    continue
+                island_cells.append((row, col))
+                board[row][col] = "#"
+                for row_offset, col_offset in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
+                    temp_row = row + row_offset
+                    temp_col = col + col_offset
+                    if 0 <= temp_row < board_height and 0 <= temp_col < board_width and board[temp_row][
+                        temp_col] == 0:
+                        cell_queue.append((temp_row, temp_col))
+
+        for row in range(board_height):
+            for col in range(board_width):
+                if board[row][col] == 0:
+                    island_bfs(row, col)
+                    island_size = len(island_cells)
+
+                    # islands smaller than 4 are illegal
+                    if island_size < 4:
+                        return False
+
+                    # only allow square shapes for islands of size 4
+                    elif island_size == 4:
+                        if not self.check_square(island_cells):
+                            return False
+
+                    # islands of size 6,7, and 8 are impossible
+                    elif island_size in (6, 7, 8):
+                        return False
+
+                    island_cells = []
+        return True
+
     def solve_board(self, board, pieces):
 
         self.iterations += 1
@@ -198,7 +279,7 @@ class TangramGame(TangramSolver):
             self.current_piece = [[]]
 
         else:
-            self.game_state = 0
+            self.game_state = "failure"
 
     #####################################################################
     # Main runner method
@@ -211,11 +292,25 @@ class TangramGame(TangramSolver):
             SCREEN.blit(pg.transform.scale(BACKGROUND, (SCREEN_WIDTH, SCREEN_HEIGHT)), (0, 0))
 
             # draw failure state if no solutions were found
-            if not self.game_state:
+            if self.game_state == "failure":
                 self.draw_fail_state()
                 for event in pg.event.get():
+                    if event.type == pg.QUIT:
+                        pg.quit()
+                        sys.exit()
                     if event.type == pg.KEYDOWN:
-                        self.game_state = 1
+                        self.game_state = "play"
+                continue
+
+            elif self.game_state == "start":
+                self.draw_start_state()
+                for event in pg.event.get():
+                    if event.type == pg.QUIT:
+                        pg.quit()
+                        sys.exit()
+                    if event.type == pg.KEYDOWN:
+                        self.game_state = "play"
+
                 continue
 
             self.draw_title()
@@ -237,7 +332,7 @@ class TangramGame(TangramSolver):
                     if (0 <= row < len(self.board)) and (0 <= col < len(self.board[0])):
                         self.add_erase_piece(row, col)
 
-                if event.type == pg.KEYDOWN:
+                if event.type == pg.KEYDOWN and self.unused_pieces:
                     # rotate and flip current piece
                     if event.key == pg.K_r:
                         self.current_piece = self.rotate_piece(self.current_piece)
