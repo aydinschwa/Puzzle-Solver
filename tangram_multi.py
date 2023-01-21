@@ -61,10 +61,22 @@ def multi_sim(process_num):
 
 if __name__ == "__main__":
     processes = []
-    for i in range(8):
+    for i in range(7):
         p = multiprocessing.Process(target=multi_sim, args=(i,))
         p.start()
         processes.append(p)
 
     for p in processes:
         p.join()
+
+    # combine all solutions after all processes finish running
+    solutions = []
+    for i in range(7):
+        FileStore = open(f"stored_objects/solutions_duplicates_{i}.pickle", "rb")
+        row_solutions = pickle.load(FileStore)
+        FileStore.close()
+        solutions.extend(row_solutions)
+
+    FileStore = open("solutions/combined.pickle", "wb")
+    pickle.dump(solutions, FileStore)
+    FileStore.close()
